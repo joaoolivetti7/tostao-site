@@ -508,8 +508,9 @@ p { text-wrap: pretty; }
 </footer>
 
 <script>
-// Link do APK: sempre o tostao.apk do Release mais recente no GitHub. Vazio = botão mostra "em breve".
-const APK_URL = 'https://github.com/joaoolivetti7/tostao-site/releases/latest/download/tostao.apk';
+// APK servido pelo próprio site (vercel.json força "arquivo genérico": com o tipo de app Android,
+// o Chrome de alguns celulares trava no fim do download). Vazio = botão mostra "em breve".
+const APK_URL = '/tostao.apk';
 
 const fmt = (v) => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const tint = (c) => `color-mix(in srgb, ${c} 20%, transparent)`;
@@ -664,6 +665,7 @@ const apk = document.getElementById('apk-link');
 if (APK_URL) {
   document.querySelectorAll('[data-apk]').forEach((a) => {
     a.href = APK_URL;
+    a.setAttribute('download', 'tostao.apk');
     a.addEventListener('click', () => {
       const hint = document.getElementById('dl-hint');
       hint.hidden = false;
