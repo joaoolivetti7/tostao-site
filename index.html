@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12201c">
+<title>Tostão</title>
+<meta name="description" content="Saiba quanto vem na fatura antes dela chegar. App de finanças para Android, grátis e sem internet.">
+<link rel="icon" type="image/svg+xml" href="brand/favicon.svg">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+/* Layout: faixas alternando verde-escuro (app) e papel (cédula), cada uma com um celular que demonstra o app. */
+:root {
+  color-scheme: dark;
+  /* Paleta "Cédula" do app (src/theme/tokens.ts) */
+  --bg: #12201c;
+  --surface: #1a2c27;
+  --surface-2: #243832;
+  --surface-3: #2e443d;
+  --sunken: #0c1714;
+  --fg: #ece8dc;
+  --fg-2: #bcc3b8;
+  --fg-3: #93a099;
+  --gold: #e9c46a;
+  --gold-strong: #f3d68e;
+  --gold-edge: #a8862e;
+  --gold-soft: #3a3218;
+  --gold-ink: #f6e3b0;
+  --edge-n: #0a1311;
+  --income: #7fd49a;
+  --pending: #c9b3f2;
+  /* Faixas claras */
+  --paper: #f4efe4;
+  --paper-2: #fbf8f1;
+  --paper-3: #ede7da;
+  --paper-edge: #d6cdb9;
+  --ink: #1d2a28;
+  --ink-2: #4a5753;
+  --ink-3: #5f6a66;
+  --ink-gold: #8a6410;
+  --ok: #2c7a4b;
+  --meh: #9a6a0c;
+  --bad: #c0392b;
+  --black: #050608;
+
+  --font: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --ease-pop: cubic-bezier(.34, 1.56, .64, 1);
+  --ease-out: cubic-bezier(.2, .9, .25, 1);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  background: var(--bg);
+  color: var(--fg);
+  overflow-x: hidden;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 40; background: var(--bg); }
+a { color: var(--gold); }
+a:hover { color: var(--gold-strong); }
+a:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 10px; }
+h1, h2, h3 { text-wrap: balance; }
+p { text-wrap: pretty; }
+
+.wrap {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding-left: max(24px, env(safe-area-inset-left, 0px));
+  padding-right: max(24px, env(safe-area-inset-right, 0px));
+}
+.band { padding-block: 96px; scroll-margin-top: 60px; }
+.band--paper { background: var(--paper); color: var(--ink); }
+.eyebrow { font: 500 12px var(--mono); letter-spacing: .06em; color: var(--gold); }
+.band--paper .eyebrow { color: var(--ink-gold); }
+.h2 { margin: 0; font-size: clamp(32px, 4.4vw, 48px); line-height: 1.05; font-weight: 700; letter-spacing: -.03em; }
+.lead { display: flex; flex-direction: column; gap: 12px; max-width: 640px; }
+.num { font-variant-numeric: tabular-nums; }
+
+.ic { width: 16px; height: 16px; flex: none; }
+.ic-15 { width: 15px; height: 15px; }
+.ic-20 { width: 20px; height: 20px; }
+.ic-22 { width: 22px; height: 22px; }
+.ic-26 { width: 26px; height: 26px; }
+
+/* Botões de degrau (mesma linguagem do app) */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  text-decoration: none; font-weight: 700; border: 0; cursor: pointer; font-family: inherit;
+  transition: transform 90ms, box-shadow 90ms;
+}
+.btn--gold { background: var(--gold); color: var(--bg); box-shadow: 0 4px 0 var(--gold-edge), 0 18px 36px rgba(0, 0, 0, .4); }
+.btn--gold:hover { color: var(--bg); background: var(--gold-strong); }
+.btn--gold:active { transform: translateY(4px); box-shadow: 0 0 0 var(--gold-edge), 0 8px 18px rgba(0, 0, 0, .4); }
+.btn--dark { background: var(--surface); color: var(--fg); box-shadow: 0 4px 0 var(--edge-n); }
+.btn--dark:hover { color: var(--fg); background: var(--surface-2); }
+.btn--dark:active { transform: translateY(4px); box-shadow: 0 0 0 var(--edge-n); }
+.btn--lg { height: 58px; padding: 0 22px 0 18px; border-radius: 14px; font-size: 16px; }
+.btn--sm { height: 40px; padding: 0 16px; border-radius: 11px; font-size: 14px; box-shadow: 0 3px 0 var(--gold-edge); }
+.btn--sm:active { transform: translateY(3px); box-shadow: 0 0 0 var(--gold-edge); }
+.btn-stack { display: flex; flex-direction: column; line-height: 1.1; text-align: left; }
+.btn-stack small { font-size: 11px; font-weight: 600; }
+.btn-stack strong { font-size: 18px; }
+
+/* Cabeçalho */
+.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30;
+  background: rgba(18, 32, 28, .86);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(236, 232, 220, .06);
+}
+.top .wrap { display: flex; align-items: center; gap: 24px; padding-block: 12px; }
+.top img { height: 30px; width: auto; }
+.top nav { display: flex; gap: 22px; margin-left: auto; font-size: 14px; font-weight: 600; }
+.top nav a { color: var(--fg-2); text-decoration: none; }
+.top nav a:hover { color: var(--fg); }
+@media (max-width: 760px) { .top nav { display: none; } .top .btn { margin-left: auto; } }
+
+/* Hero */
+.hero { position: relative; padding-block: 72px 96px; }
+.hero .wrap { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 56px; align-items: center; }
+.hero-copy { display: flex; flex-direction: column; gap: 26px; min-width: 0; }
+.pill {
+  display: inline-flex; align-self: flex-start; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 6px 12px 6px 8px; border-radius: 999px; background: var(--surface);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .25); font-size: 13px; font-weight: 600; color: var(--fg-2);
+}
+.pill b { padding: 2px 8px; border-radius: 999px; background: var(--gold); color: var(--bg); font-size: 11px; }
+.hero h1 { margin: 0; font-size: clamp(40px, 6vw, 68px); line-height: 1; font-weight: 700; letter-spacing: -.035em; }
+.hero h1 span { color: var(--gold); }
+.hero-copy > p { margin: 0; max-width: 500px; font-size: 18px; line-height: 1.55; color: var(--fg-2); }
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.trust { display: flex; gap: 20px; flex-wrap: wrap; font-size: 13px; color: var(--fg-3); }
+.trust span { display: flex; align-items: center; gap: 6px; }
+.trust .ic { color: var(--income); }
+
+/* Celular (mockup) */
+.stage { position: relative; display: flex; justify-content: center; padding-block: 20px; }
+.coin { position: absolute; animation: floaty 5s ease-in-out infinite; perspective: 400px; }
+.coin img { width: 100%; height: 100%; animation: coinSpin 6s linear infinite; }
+.coin--a { top: 2%; left: 4%; width: 86px; height: 86px; }
+.coin--b { bottom: 6%; right: 2%; width: 54px; height: 54px; animation-duration: 4s; animation-delay: .8s; }
+.coin--b img { animation-duration: 4.5s; animation-direction: reverse; }
+.phone {
+  position: relative; width: 300px; max-width: 100%; height: 614px; border-radius: 42px;
+  background: var(--black); padding: 9px;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .3), 0 40px 80px rgba(0, 0, 0, .6);
+}
+.phone--tilt { transform: rotate(-3deg); }
+.screen {
+  position: relative; width: 100%; height: 100%; border-radius: 34px; overflow: hidden;
+  background: var(--bg); color: var(--fg); display: flex; flex-direction: column;
+}
+.status { flex: none; height: 28px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; font-size: 11.5px; font-weight: 600; }
+.status div { display: flex; gap: 4px; align-items: center; }
+.app { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 6px 12px 12px; overflow: hidden; }
+
+.card {
+  position: relative; height: 150px; flex: none; border-radius: 18px; overflow: hidden; padding: 16px;
+  background: linear-gradient(135deg, #8b6aa8, color-mix(in srgb, #8b6aa8 55%, var(--sunken)));
+  color: var(--paper); display: flex; flex-direction: column; justify-content: space-between;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .25), 0 14px 30px rgba(0, 0, 0, .5);
+}
+.card::after { content: ""; position: absolute; right: -40px; bottom: -70px; width: 180px; height: 180px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18); }
+.card-top { display: flex; justify-content: space-between; align-items: center; position: relative; }
+.card-top span:first-child { font-size: 13px; font-weight: 700; }
+.card-top span:last-child { padding: 3px 8px; border-radius: 6px; background: rgba(0, 0, 0, .22); font-size: 10px; font-weight: 700; }
+.card-amt { display: flex; flex-direction: column; gap: 2px; position: relative; }
+.card-amt small { font-size: 10.5px; opacity: .8; }
+.card-amt .odo { font-size: 30px; font-weight: 700; letter-spacing: -.02em; }
+
+.limit { display: flex; flex-direction: column; gap: 6px; }
+.limit-head { display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; letter-spacing: .08em; color: var(--fg-3); }
+.limit-head span:last-child { letter-spacing: 0; }
+.limit-track { height: 8px; border-radius: 4px; background: var(--sunken); overflow: hidden; }
+.limit-fill { height: 100%; border-radius: 4px; background: var(--gold); transition: width 700ms cubic-bezier(.34, 1.3, .64, 1); }
+
+.list { display: flex; flex-direction: column; border-radius: 14px; background: var(--surface); overflow: hidden; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .03), 0 6px 16px rgba(0, 0, 0, .35); }
+.tx { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 10px; border-bottom: 1px solid rgba(236, 232, 220, .06); }
+.tx.is-new { animation: rowIn 520ms var(--ease-pop) both; }
+.tx-ic { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; }
+.tx-ic .ic { width: 15px; height: 15px; }
+.tx-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tx-body b { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tx-meta { display: flex; gap: 5px; align-items: center; font-size: 10px; color: var(--fg-3); }
+.chip { padding: 0 5px; border-radius: 4px; background: var(--surface-3); color: var(--fg-2); font: 500 9.5px var(--mono); }
+.tx-val { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.toast {
+  position: absolute; left: 12px; right: 12px; top: 36px; display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; border-radius: 12px; background: var(--surface-2); font-size: 11.5px; line-height: 1.35;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .25), 0 14px 30px rgba(0, 0, 0, .55); animation: toastIn 2.6s ease both;
+}
+.toast .ic { color: var(--gold); }
+
+/* Odômetro: cada dígito é uma coluna 0–9 que desliza */
+.odo { display: inline-flex; font-variant-numeric: tabular-nums; line-height: 1.15; white-space: nowrap; }
+.odo-col { display: inline-block; height: 1.15em; overflow: hidden; }
+.odo-col span { display: flex; flex-direction: column; transition: transform 700ms cubic-bezier(.2, .9, .25, 1.05); }
+.odo-col i { font-style: normal; height: 1.15em; }
+
+/* Como funciona */
+.how { display: flex; flex-direction: column; gap: 56px; }
+.how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 48px; align-items: start; }
+.steps { display: flex; flex-direction: column; }
+.step {
+  min-height: 300px; display: flex; flex-direction: column; justify-content: center; gap: 14px; padding-block: 28px;
+  cursor: pointer; opacity: .38; transition: opacity 400ms; background: none; border: 0; text-align: left; color: inherit; font: inherit;
+}
+.step.is-on { opacity: 1; }
+.step-head { display: flex; align-items: center; gap: 14px; }
+.step-n {
+  width: 44px; height: 44px; flex: none; border-radius: 13px; display: grid; place-items: center;
+  background: var(--paper-3); color: var(--ink-3); font-size: 18px; font-weight: 700; box-shadow: 0 3px 0 var(--paper-edge); transition: all 300ms;
+}
+.step.is-on .step-n { background: var(--gold); color: var(--bg); box-shadow: 0 3px 0 var(--gold-edge); }
+.step h3 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
+.step p { margin: 0; max-width: 440px; font-size: 16.5px; line-height: 1.6; color: var(--ink-2); }
+.how-phone { position: sticky; top: 96px; display: flex; justify-content: center; }
+.how-phone .phone { width: 290px; height: 560px; border-radius: 40px; padding: 8px; box-shadow: 0 2px 0 rgba(0, 0, 0, .2), 0 30px 60px rgba(29, 42, 40, .35); }
+.how-phone .screen { border-radius: 33px; }
+.demo { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 12px; padding: 40px 14px 14px; animation: screenIn 480ms cubic-bezier(.2, .9, .25, 1.05) both; }
+.demo-title { font-size: 15px; font-weight: 700; }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; border-radius: 12px; background: var(--sunken); font-size: 10.5px; font-weight: 600; text-align: center; }
+.seg span { padding: 7px 0; color: var(--fg-3); }
+.seg .on-gold { border-radius: 9px; background: var(--surface); box-shadow: 0 0 0 1px var(--gold); color: var(--gold); }
+.seg .on { border-radius: 9px; background: var(--surface); box-shadow: 0 2px 0 rgba(0, 0, 0, .3); color: var(--fg); }
+.amount { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 16px; border-radius: 14px; background: var(--sunken); }
+.amount .odo { font-size: 34px; font-weight: 700; }
+.amount small { font-size: 11px; color: var(--fg-3); }
+.field { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 12px; background: var(--surface); }
+.field span { font-size: 12px; color: var(--fg-2); }
+.field b { font-size: 20px; }
+.hint { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 12px; background: var(--gold-soft); color: var(--gold-ink); font-size: 11.5px; line-height: 1.35; }
+.hint--info { background: var(--surface-2); color: var(--fg-2); }
+.hint--info .ic { color: var(--gold); }
+.save { margin-top: auto; height: 46px; border-radius: 13px; background: var(--gold); color: var(--bg); display: grid; place-items: center; font-size: 14px; font-weight: 700; box-shadow: 0 3px 0 var(--gold-edge); }
+.parcel { display: grid; grid-template-columns: 36px 1fr auto; gap: 8px; align-items: center; padding: 11px 12px; border-bottom: 1px solid rgba(236, 232, 220, .06); animation: rowIn 480ms var(--ease-pop) both; font-size: 12.5px; }
+.parcel span:first-child { font: 500 10.5px var(--mono); color: var(--fg-3); }
+.parcel span:last-child { font-weight: 700; font-variant-numeric: tabular-nums; }
+.box { display: flex; flex-direction: column; gap: 2px; padding: 14px; border-radius: 14px; background: var(--surface); }
+.box small { font-size: 11px; color: var(--fg-3); }
+.box .odo { font-size: 28px; font-weight: 700; }
+.box em { font-style: normal; font-size: 11px; color: var(--gold); font-weight: 600; }
+.bars { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; height: 150px; align-items: end; padding: 12px 10px 6px; border-radius: 14px; background: var(--surface); }
+.bar { display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
+.bar b { font-size: 8.5px; color: var(--fg-2); font-variant-numeric: tabular-nums; }
+.bar i { width: 100%; border-radius: 5px 5px 2px 2px; transform-origin: bottom; animation: grow 700ms cubic-bezier(.34, 1.4, .64, 1) both; }
+.bar span { font-size: 9.5px; color: var(--fg-3); }
+.totals { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 14px; background: var(--surface); font-size: 12px; }
+.totals div { display: flex; justify-content: space-between; }
+.totals span { color: var(--fg-3); }
+.totals b { font-variant-numeric: tabular-nums; }
+@media (max-width: 860px) {
+  .how-phone { position: static; order: -1; }
+  .step { min-height: 0; padding-block: 18px; }
+}
+
+/* Privacidade */
+.split { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr)); gap: 56px; align-items: center; }
+.split-copy { display: flex; flex-direction: column; gap: 18px; }
+.split-copy p { margin: 0; max-width: 460px; font-size: 17px; line-height: 1.6; color: var(--fg-2); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px; }
+.tile { display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 18px; background: var(--surface); box-shadow: 0 2px 0 rgba(0, 0, 0, .25), 0 14px 30px rgba(0, 0, 0, .4); transition: transform 200ms; }
+.tile:hover { transform: translateY(-4px); }
+.tile-ic { width: 44px; height: 44px; border-radius: 13px; display: grid; place-items: center; background: var(--surface-2); color: var(--gold); box-shadow: 0 3px 0 var(--edge-n); }
+.tile b { font-size: 17px; }
+.tile span { font-size: 14px; line-height: 1.5; color: var(--fg-2); }
+
+/* Comparar */
+.compare-wrap { max-width: 960px; display: flex; flex-direction: column; gap: 40px; }
+.table-scroll { border-radius: 20px; background: var(--paper-2); box-shadow: 0 2px 0 rgba(29, 42, 40, .06), 0 12px 26px rgba(29, 42, 40, .12); overflow-x: auto; }
+.table { min-width: 620px; display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr)); }
+.th { padding: 18px 12px; text-align: center; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.th--us { padding: 14px 12px; display: flex; justify-content: center; align-items: center; background: var(--bg); border-radius: 16px 16px 0 0; margin-top: -6px; }
+.th--us img { height: 22px; }
+.td { padding: 16px 12px; border-top: 1px solid rgba(29, 42, 40, .08); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-align: center; }
+.td small { font-size: 11.5px; color: var(--ink-3); }
+.td--label { padding: 16px 20px; align-items: flex-start; text-align: left; font-size: 15px; font-weight: 600; }
+.td--us { background: var(--bg); border-top-color: rgba(236, 232, 220, .07); }
+.td--us .ic { color: var(--gold); }
+.td--us small { color: var(--fg-2); }
+.td--last { border-radius: 0 0 16px 16px; }
+.ok { color: var(--ok); } .meh { color: var(--meh); } .bad { color: var(--bad); }
+
+/* Instalar */
+.install { display: flex; flex-direction: column; gap: 40px; }
+.install-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 14px; counter-reset: s; }
+.install-step { display: flex; flex-direction: column; gap: 14px; padding: 24px; border-radius: 20px; background: var(--surface); box-shadow: 0 2px 0 rgba(0, 0, 0, .25), 0 14px 30px rgba(0, 0, 0, .4); }
+.install-step header { display: flex; align-items: center; gap: 12px; }
+.install-step .step-n { background: var(--gold); color: var(--bg); box-shadow: 0 3px 0 var(--gold-edge); }
+.install-step b { font-size: 18px; }
+.install-step p { margin: 0; font-size: 15px; line-height: 1.55; color: var(--fg-2); }
+.install-step code { font: 500 13px var(--mono); padding: 1px 6px; border-radius: 6px; background: var(--surface-3); color: var(--fg); }
+.note { display: flex; gap: 10px; align-items: flex-start; max-width: 720px; padding: 14px 16px; border-radius: 14px; background: var(--gold-soft); color: var(--gold-ink); font-size: 14.5px; line-height: 1.5; }
+.note .ic { margin-top: 2px; }
+
+/* Baixar */
+.cta-band { padding-block: 24px 96px; scroll-margin-top: 60px; }
+.cta {
+  position: relative; border-radius: 32px; background: var(--gold); color: var(--bg); padding: clamp(32px, 6vw, 72px); overflow: hidden;
+  box-shadow: 0 6px 0 var(--gold-edge), 0 30px 60px rgba(0, 0, 0, .45);
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 32px; align-items: center;
+}
+.cta::before, .cta::after { content: ""; position: absolute; width: 280px; height: 280px; border-radius: 50%; }
+.cta::before { right: -60px; top: -60px; box-shadow: inset 0 0 0 2px rgba(18, 32, 28, .12); }
+.cta::after { right: -10px; top: -110px; box-shadow: inset 0 0 0 2px rgba(18, 32, 28, .08); }
+.cta > div { position: relative; display: flex; flex-direction: column; gap: 14px; }
+.cta h2 { margin: 0; font-size: clamp(34px, 4.6vw, 54px); line-height: 1; font-weight: 700; letter-spacing: -.035em; }
+.cta p { margin: 0; font-size: 17px; line-height: 1.55; max-width: 420px; color: var(--gold-soft); }
+.cta-actions { align-items: flex-start; gap: 12px !important; }
+.btn--ink { height: 66px; padding: 0 26px 0 20px; border-radius: 16px; background: var(--bg); color: var(--fg); box-shadow: 0 5px 0 #050a09, 0 18px 36px rgba(18, 32, 28, .35); }
+.btn--ink:hover { color: var(--fg); }
+.btn--ink:active { transform: translateY(5px); box-shadow: 0 0 0 #050a09; }
+.btn--ink .ic { color: var(--gold); }
+.btn--ink small { color: var(--fg-2); font-size: 12px; }
+.btn--ink strong { font-size: 21px; }
+.btn[aria-disabled="true"] { cursor: default; opacity: .7; }
+.cta-meta { font-size: 13px; color: #534114; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+/* Rodapé */
+.foot { border-top: 1px solid rgba(236, 232, 220, .07); }
+.foot .wrap { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; padding-block: 28px; font-size: 13px; color: var(--fg-3); }
+.foot img { height: 22px; }
+.foot nav { margin-left: auto; display: flex; gap: 18px; }
+.foot a { color: var(--fg-3); }
+
+@keyframes rowIn { from { opacity: 0; transform: translateY(-14px) scale(.96); } }
+@keyframes toastIn { 0% { opacity: 0; transform: translateY(-20px) scale(.94); } 12% { opacity: 1; transform: none; } 85% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-10px); } }
+@keyframes screenIn { from { opacity: 0; transform: translateY(16px) scale(.98); } }
+@keyframes floaty { 50% { transform: translateY(-10px) rotate(-1deg); } }
+@keyframes coinSpin { to { transform: rotateY(360deg); } }
+@keyframes grow { from { transform: scaleY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
+  html { scroll-behavior: auto; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <img src="brand/tostao-horizontal-negativo.svg" alt="Tostão" width="133" height="30">
+    <nav aria-label="Seções">
+      <a href="#como">Como funciona</a>
+      <a href="#privacidade">Privacidade</a>
+      <a href="#comparar">Comparar</a>
+      <a href="#instalar">Instalar</a>
+    </nav>
+    <a href="#baixar" class="btn btn--gold btn--sm"><i data-lucide="download" class="ic"></i>Baixar grátis</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-copy">
+        <div class="pill"><b>GRÁTIS</b>Para Android · funciona sem internet</div>
+        <h1>Saiba quanto vem na fatura <span>antes dela chegar.</span></h1>
+        <p>Lance a compra uma vez. O Tostão coloca cada parcela na fatura certa e mostra, mês a mês, quanto você já deve no cartão, separado do dinheiro que você tem na conta.</p>
+        <div class="row">
+          <a href="#baixar" class="btn btn--gold btn--lg">
+            <i data-lucide="download" class="ic ic-22"></i>
+            <span class="btn-stack"><small>Grátis para</small><strong>Android</strong></span>
+          </a>
+          <a href="#como" class="btn btn--dark btn--lg" style="font-weight:600;font-size:15px">Ver como funciona<i data-lucide="arrow-down" class="ic"></i></a>
+        </div>
+        <div class="trust">
+          <span><i data-lucide="user-x" class="ic ic-15"></i>Sem cadastro</span>
+          <span><i data-lucide="wifi-off" class="ic ic-15"></i>Sem internet</span>
+          <span><i data-lucide="key-round" class="ic ic-15"></i>Sem senha de banco</span>
+        </div>
+      </div>
+
+      <div class="stage" aria-label="Demonstração: compras entrando na fatura do cartão">
+        <div class="coin coin--a" aria-hidden="true"><img src="brand/tostao-icone.svg" alt=""></div>
+        <div class="coin coin--b" aria-hidden="true"><img src="brand/tostao-icone.svg" alt=""></div>
+        <div class="phone phone--tilt">
+          <div class="screen">
+            <div class="status"><span>9:41</span><div><i data-lucide="signal" class="ic" style="width:12px;height:12px"></i><i data-lucide="battery-full" class="ic ic-15"></i></div></div>
+            <div class="app">
+              <div class="card">
+                <div class="card-top"><span>Nubank</span><span>FATURA DE NOVEMBRO</span></div>
+                <div class="card-amt">
+                  <small>Vai vir na fatura</small>
+                  <span class="odo" id="hero-total"></span>
+                  <small>Vence 20/11 · faltam 34 dias</small>
+                </div>
+              </div>
+              <div class="limit">
+                <div class="limit-head"><span>LIMITE</span><span class="num" id="hero-used"></span></div>
+                <div class="limit-track"><div class="limit-fill" id="hero-bar"></div></div>
+              </div>
+              <div class="list" id="hero-list"></div>
+            </div>
+            <div id="hero-toast"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="como" class="band band--paper">
+    <div class="wrap how">
+      <div class="lead" data-reveal>
+        <span class="eyebrow">COMO FUNCIONA</span>
+        <h2 class="h2">Você lança uma vez. O Tostão faz a conta das próximas faturas.</h2>
+      </div>
+      <div class="how-grid">
+        <div class="steps" id="steps"></div>
+        <div class="how-phone">
+          <div class="phone"><div class="screen" id="demo"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="privacidade" class="band">
+    <div class="wrap split">
+      <div class="split-copy" data-reveal>
+        <span class="eyebrow">PRIVACIDADE</span>
+        <h2 class="h2">Seu dinheiro é assunto seu. Nem a gente vê.</h2>
+        <p>O Tostão guarda tudo só no seu celular. Não tem conta para criar, não pede senha de banco e não manda nada para servidor nenhum.</p>
+      </div>
+      <div class="tiles" id="privacy"></div>
+    </div>
+  </section>
+
+  <section id="comparar" class="band band--paper">
+    <div class="wrap compare-wrap">
+      <div class="lead" data-reveal>
+        <span class="eyebrow">COMPARE</span>
+        <h2 class="h2">Planilha dá trabalho. App de banco só mostra um banco.</h2>
+      </div>
+      <div class="table-scroll" data-reveal>
+        <div class="table" id="compare" role="table" aria-label="Comparação entre planilha, app do banco e Tostão">
+          <div class="th" role="columnheader"></div>
+          <div class="th" role="columnheader">Planilha</div>
+          <div class="th" role="columnheader">App do banco</div>
+          <div class="th th--us" role="columnheader"><img src="brand/tostao-horizontal-negativo.svg" alt="Tostão"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="instalar" class="band">
+    <div class="wrap install">
+      <div class="lead" data-reveal>
+        <span class="eyebrow">INSTALAR</span>
+        <h2 class="h2">Três passos e está no seu celular.</h2>
+      </div>
+      <div class="install-steps">
+        <article class="install-step" data-reveal>
+          <header><span class="step-n">1</span><b>Baixe o arquivo</b></header>
+          <p>Toque em <strong>Baixar o app</strong> no celular. Vem um arquivo <code>.apk</code>, que é o instalador do Android.</p>
+        </article>
+        <article class="install-step" data-reveal>
+          <header><span class="step-n">2</span><b>Permita a instalação</b></header>
+          <p>Abra o arquivo baixado. Na primeira vez o Android pede para <strong>permitir apps desta fonte</strong>. Permita para o navegador e volte.</p>
+        </article>
+        <article class="install-step" data-reveal>
+          <header><span class="step-n">3</span><b>Abra o Tostão</b></header>
+          <p>Toque em <strong>Instalar</strong> e depois em <strong>Abrir</strong>. Cadastre sua primeira conta e pronto, sem criar login.</p>
+        </article>
+      </div>
+      <div class="note" data-reveal>
+        <i data-lucide="refresh-cw" class="ic ic-20"></i>
+        <span>Para atualizar, instale a versão nova por cima da antiga. Seus dados continuam. Não desinstale antes: desinstalar apaga os dados do celular, a menos que você tenha um backup.</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="baixar" class="cta-band">
+    <div class="wrap">
+      <div class="cta" data-reveal>
+        <div>
+          <h2>Cuide de cada tostão.</h2>
+          <p>Grátis, sem anúncios no meio da conta e sem pedir seus dados. Instala em segundos.</p>
+        </div>
+        <div class="cta-actions">
+          <a href="#instalar" class="btn btn--ink" id="apk-link" target="_blank" rel="noopener">
+            <i data-lucide="download" class="ic ic-26"></i>
+            <span class="btn-stack"><small id="apk-small">Baixar grátis para</small><strong id="apk-label">Android</strong></span>
+          </a>
+          <span class="cta-meta"><i data-lucide="smartphone" class="ic ic-15"></i>Android 7 ou mais recente · arquivo .apk</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <img src="brand/tostao-horizontal-negativo.svg" alt="Tostão" width="98" height="22">
+    <span>© 2026 Tostão</span>
+    <nav aria-label="Rodapé"><a href="#privacidade">Privacidade</a><a href="#instalar">Como instalar</a></nav>
+  </div>
+</footer>
+
+<script>
+// Link do APK (página de instalação do EAS Build). Vazio = botão mostra "link em breve".
+const APK_URL = '';
+
+const fmt = (v) => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const tint = (c) => `color-mix(in srgb, ${c} 20%, transparent)`;
+const icons = () => window.lucide && lucide.createIcons();
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** Odômetro: refaz as colunas só quando muda o formato; senão, só desliza os dígitos. */
+function odometer(el, value) {
+  const text = fmt(value);
+  const shape = text.replace(/\d/g, '0');
+  if (el.dataset.shape !== shape) {
+    el.dataset.shape = shape;
+    el.setAttribute('aria-label', text);
+    el.innerHTML = [...text].map((ch) => /\d/.test(ch)
+      ? `<span class="odo-col" aria-hidden="true"><span>${'0123456789'.split('').map((d) => `<i>${d}</i>`).join('')}</span></span>`
+      : `<span aria-hidden="true">${ch === ' ' ? '&nbsp;' : ch}</span>`).join('');
+    el.offsetWidth; // aplica a posição 0 antes de rolar
+  }
+  const digits = [...text].filter((ch) => /\d/.test(ch));
+  el.querySelectorAll('.odo-col > span').forEach((col, i) => { col.style.transform = `translateY(${-digits[i] * 1.15}em)`; });
+}
+
+// Hero: compras entrando na fatura, uma a uma.
+const HERO = [
+  ['TV Samsung', 'compra 20 jul', '5/10', 329.9, 'shopping-bag', '#D9A23F'],
+  ['Mercado Extra', '14 out', null, 412.37, 'shopping-cart', '#4FB37A'],
+  ['Spotify', 'fixa', null, 21.9, 'repeat', '#A27AE0'],
+  ['Uber', '16 out', null, 34.5, 'car', '#3FA7C9'],
+  ['Fone JBL', 'hoje', '1/6', 83.32, 'headphones', '#D9A23F'],
+  ['iFood', 'hoje', null, 68.9, 'utensils', '#E8875A'],
+];
+const TOASTS = { 4: 'Fone JBL em 6x · 1ª parcela na fatura de novembro', 5: 'iFood entrou na fatura de novembro' };
+let heroN = 2;
+
+function renderHero(prev) {
+  const items = HERO.slice(0, heroN);
+  const total = Math.round(items.reduce((a, x) => a + x[3], 0) * 100) / 100;
+  const used = total + 2351.3;
+  odometer(document.getElementById('hero-total'), total);
+  document.getElementById('hero-used').textContent = `${fmt(used).replace(/,\d\d$/, '')} de R$ 8.000`;
+  document.getElementById('hero-bar').style.width = Math.min(used / 8000 * 100, 100) + '%';
+  document.getElementById('hero-list').innerHTML = items.map(([d, m, inst, v, i, c], idx) => `
+    <div class="tx${idx >= prev ? ' is-new' : ''}">
+      <div class="tx-ic" style="background:${tint(c)};color:${c}"><i data-lucide="${i}" class="ic"></i></div>
+      <div class="tx-body"><b>${d}</b><div class="tx-meta"><span>${m}</span>${inst ? `<span class="chip">${inst}</span>` : ''}</div></div>
+      <span class="tx-val">${fmt(v)}</span>
+    </div>`).join('');
+  document.getElementById('hero-toast').innerHTML = TOASTS[heroN]
+    ? `<div class="toast" role="status"><i data-lucide="calendar-check" class="ic"></i><span>${TOASTS[heroN]}</span></div>` : '';
+  icons();
+}
+
+function heroLoop() {
+  setTimeout(() => {
+    const prev = heroN >= HERO.length ? 0 : heroN;
+    heroN = heroN >= HERO.length ? 1 : heroN + 1;
+    renderHero(prev);
+    heroLoop();
+  }, heroN >= HERO.length ? 3200 : 1700);
+}
+
+// Como funciona: três passos, o celular troca de tela conforme o passo em foco.
+const STEPS = [
+  ['Lance a compra', 'Digitou o valor, escolheu o cartão e em quantas vezes. Pronto: sem planilha, sem fórmula, sem lembrar depois.'],
+  ['Ele espalha as parcelas', 'O Tostão sabe o dia que seu cartão fecha. Cada parcela vai para a fatura certa, até a última.'],
+  ['Você vê o futuro', 'Abra a fatura de novembro, dezembro, janeiro… e saiba hoje quanto vai pagar. Tudo separado do saldo da conta.'],
+];
+const MONTHS = ['novembro', 'dezembro', 'janeiro', 'fevereiro', 'março', 'abril'];
+const BARS = [[1304.77, 'nov'], [1188.2, 'dez'], [742.1, 'jan'], [612.5, 'fev'], [412.9, 'mar'], [83.3, 'abr']];
+let step = -1;
+
+const DEMOS = [
+  () => `<div class="demo">
+      <span class="demo-title">Novo lançamento</span>
+      <div class="seg"><span>Despesa</span><span class="on-gold">Cartão</span><span>Receita</span></div>
+      <div class="amount"><span class="odo" data-odo="499.9"></span><small>Fone JBL · Compras</small></div>
+      <div class="seg" style="font-size:11px"><span>À vista</span><span class="on">Parcelada</span><span>Fixa</span></div>
+      <div class="field"><span>Parcelas</span><b>6x</b></div>
+      <div class="hint"><i data-lucide="calendar-check" class="ic ic-15"></i><span>1ª parcela cai na fatura de <b>novembro</b></span></div>
+      <div class="save">Salvar em 6x</div>
+    </div>`,
+  () => `<div class="demo" style="gap:10px">
+      <span class="demo-title">Fone JBL · 6x de R$ 83,32</span>
+      <span style="font-size:11.5px;color:var(--fg-3);margin-top:-6px">Cada parcela já está na sua fatura</span>
+      <div class="list" style="box-shadow:none">${MONTHS.map((m, i) => `
+        <div class="parcel" style="animation-delay:${i * 70}ms"><span>${i + 1}/6</span><span>Fatura de ${m}</span><span style="color:${i ? 'var(--fg)' : 'var(--gold)'}">${fmt(i ? 83.31 : 83.35)}</span></div>`).join('')}
+      </div>
+      <div class="hint hint--info"><i data-lucide="info" class="ic ic-15"></i>Os centavos que sobram vão para a 1ª parcela.</div>
+    </div>`,
+  () => `<div class="demo">
+      <span class="demo-title">Próximas faturas</span>
+      <div class="box"><small>Fatura de novembro</small><span class="odo" data-odo="1304.77"></span><em>Vence 20/11 · ainda pode mudar</em></div>
+      <div class="bars">${BARS.map(([v, m], i) => `
+        <div class="bar"><b>${Math.round(v)}</b><i style="height:${v / 1304.77 * 82}%;background:${i ? '#4f6b62' : 'var(--gold)'};animation-delay:${i * 80}ms"></i><span>${m}</span></div>`).join('')}
+      </div>
+      <div class="totals">
+        <div><span>Saldo em contas</span><b>R$ 7.314,85</b></div>
+        <div><span>Você deve no cartão</span><b style="color:var(--gold)">R$ 2.761,20</b></div>
+      </div>
+    </div>`,
+];
+
+function setStep(i) {
+  if (i === step) return;
+  step = i;
+  document.querySelectorAll('.step').forEach((el, k) => {
+    el.classList.toggle('is-on', k === i);
+    el.setAttribute('aria-pressed', String(k === i));
+  });
+  const demo = document.getElementById('demo');
+  demo.innerHTML = DEMOS[i]();
+  icons();
+  demo.querySelectorAll('[data-odo]').forEach((el) => {
+    odometer(el, 0);
+    requestAnimationFrame(() => odometer(el, Number(el.dataset.odo)));
+  });
+}
+
+document.getElementById('steps').innerHTML = STEPS.map(([t, d], i) => `
+  <button type="button" class="step" data-step="${i}">
+    <span class="step-head"><span class="step-n">${i + 1}</span><h3>${t}</h3></span>
+    <p>${d}</p>
+  </button>`).join('');
+document.querySelectorAll('.step').forEach((el) => el.addEventListener('click', () => setStep(Number(el.dataset.step))));
+
+// Privacidade e comparação
+const PRIVACY = [
+  ['smartphone', 'Fica no seu celular', 'Os dados não saem do aparelho. Funciona até em modo avião.'],
+  ['user-x', 'Sem cadastro', 'Abriu, usou. Sem e-mail, sem login, sem senha para esquecer.'],
+  ['shield-check', 'Sem acesso ao banco', 'Você digita o que gastou. Ninguém lê seu extrato por você.'],
+  ['hard-drive-download', 'Backup é seu', 'Exporte um arquivo quando quiser ou ligue o backup diário numa pasta do celular.'],
+];
+document.getElementById('privacy').innerHTML = PRIVACY.map(([i, t, d]) => `
+  <div class="tile" data-reveal><div class="tile-ic"><i data-lucide="${i}" class="ic" style="width:21px;height:21px"></i></div><b>${t}</b><span>${d}</span></div>`).join('');
+
+const COMPARE = [
+  ['Mostra as próximas faturas com as parcelas', ['x', 'Só se você montar', 'bad'], ['circle-dashed', 'Só a do mês', 'meh'], 'Até a última parcela'],
+  ['Separa o que você tem do que você deve', ['circle-dashed', 'Depende da fórmula', 'meh'], ['x', 'Mistura tudo', 'bad'], 'Saldo e fatura separados'],
+  ['Junta vários bancos e cartões', ['circle-check', 'Manual', 'ok'], ['x', 'Só o próprio banco', 'bad'], 'Todos num lugar'],
+  ['Lança um gasto em segundos', ['x', 'Abrir, achar a linha…', 'bad'], ['circle-check', 'Automático', 'ok'], 'Teclado direto'],
+  ['Funciona sem internet', ['circle-check', 'Sim', 'ok'], ['x', 'Não', 'bad'], 'Sempre'],
+  ['Não pede senha nem dados', ['circle-check', 'Sim', 'ok'], ['x', 'Login do banco', 'bad'], 'Nada de cadastro'],
+];
+const cell = ([i, n, tone]) => `<div class="td" role="cell"><i data-lucide="${i}" class="ic ic-20 ${tone}"></i><small>${n}</small></div>`;
+document.getElementById('compare').insertAdjacentHTML('beforeend', COMPARE.map(([t, a, b, c], k) => `
+  <div class="td td--label" role="rowheader">${t}</div>${cell(a)}${cell(b)}
+  <div class="td td--us${k === COMPARE.length - 1 ? ' td--last' : ''}" role="cell"><i data-lucide="circle-check" class="ic ic-22"></i><small>${c}</small></div>`).join(''));
+
+// Botão de download
+const apk = document.getElementById('apk-link');
+if (APK_URL) {
+  apk.href = APK_URL;
+  document.getElementById('apk-label').textContent = 'Baixar o app';
+  document.getElementById('apk-small').textContent = 'Grátis · Android';
+} else {
+  apk.removeAttribute('target');
+  apk.setAttribute('aria-disabled', 'true');
+  apk.addEventListener('click', (e) => e.preventDefault());
+  document.getElementById('apk-small').textContent = 'Em breve';
+  document.getElementById('apk-label').textContent = 'Link do app';
+}
+
+// Entradas: o conteúdo já está visível; ao aparecer na tela, sobe suavemente.
+renderHero(0);
+setStep(0);
+icons();
+if (!reduced && 'IntersectionObserver' in window) {
+  const reveal = new IntersectionObserver((entries) => entries.forEach((e) => {
+    if (!e.isIntersecting) return;
+    e.target.animate([{ opacity: 0, transform: 'translateY(28px)' }, { opacity: 1, transform: 'none' }], { duration: 700, easing: 'cubic-bezier(.2,.9,.25,1)' });
+    reveal.unobserve(e.target);
+  }), { threshold: .15 });
+  document.querySelectorAll('[data-reveal]').forEach((el) => reveal.observe(el));
+  heroLoop();
+}
+if ('IntersectionObserver' in window && matchMedia('(min-width: 861px)').matches) {
+  const focus = new IntersectionObserver((entries) => entries.forEach((e) => {
+    if (e.isIntersecting) setStep(Number(e.target.dataset.step));
+  }), { rootMargin: '-45% 0px -45% 0px' });
+  document.querySelectorAll('[data-step]').forEach((el) => focus.observe(el));
+}
+</script>
+</body>
+</html>
