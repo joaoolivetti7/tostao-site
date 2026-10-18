@@ -323,6 +323,8 @@ p { text-wrap: pretty; }
 .btn--ink small { color: var(--fg-2); font-size: 12px; }
 .btn--ink strong { font-size: 21px; }
 .btn[aria-disabled="true"] { cursor: default; opacity: .7; }
+.cta .dl-hint { margin: 0; display: flex; gap: 8px; align-items: flex-start; max-width: 380px; padding: 10px 12px; border-radius: 12px; background: var(--bg); color: var(--fg); font-size: 13.5px; line-height: 1.45; }
+.cta .dl-hint .ic { color: var(--gold); margin-top: 2px; }
 .cta-meta { font-size: 13px; color: #534114; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 
 /* Rodapé */
@@ -366,7 +368,7 @@ p { text-wrap: pretty; }
         <h1>Saiba quanto vem na fatura <span>antes dela chegar.</span></h1>
         <p>Lance a compra uma vez. O Tostão coloca cada parcela na fatura certa e mostra, mês a mês, quanto você já deve no cartão, separado do dinheiro que você tem na conta.</p>
         <div class="row">
-          <a href="#baixar" class="btn btn--gold btn--lg">
+          <a href="#baixar" class="btn btn--gold btn--lg" data-apk>
             <i data-lucide="download" class="ic ic-22"></i>
             <span class="btn-stack"><small>Grátis para</small><strong>Android</strong></span>
           </a>
@@ -485,11 +487,12 @@ p { text-wrap: pretty; }
           <p>Grátis, sem anúncios no meio da conta e sem pedir seus dados. Instala em segundos.</p>
         </div>
         <div class="cta-actions">
-          <a href="#instalar" class="btn btn--ink" id="apk-link" target="_blank" rel="noopener">
+          <a href="#instalar" class="btn btn--ink" id="apk-link" data-apk>
             <i data-lucide="download" class="ic ic-26"></i>
             <span class="btn-stack"><small id="apk-small">Baixar grátis para</small><strong id="apk-label">Android</strong></span>
           </a>
           <span class="cta-meta"><i data-lucide="smartphone" class="ic ic-15"></i>Android 7 ou mais recente · arquivo .apk</span>
+          <p class="dl-hint" id="dl-hint" role="status" hidden><i data-lucide="bell" class="ic ic-15"></i><span>O download começou. Quando terminar, toque na notificação <b>tostao.apk</b> (ou abra em Downloads) para instalar.</span></p>
         </div>
       </div>
     </div>
@@ -655,14 +658,21 @@ document.getElementById('compare').insertAdjacentHTML('beforeend', COMPARE.map((
   <div class="td td--label" role="rowheader">${t}</div>${cell(a)}${cell(b)}
   <div class="td td--us${k === COMPARE.length - 1 ? ' td--last' : ''}" role="cell"><i data-lucide="circle-check" class="ic ic-22"></i><small>${c}</small></div>`).join(''));
 
-// Botão de download
+// Botões de download: abrem na mesma aba. O GitHub responde com o arquivo (anexo), então o
+// navegador só pergunta se quer baixar e a página continua aberta.
 const apk = document.getElementById('apk-link');
 if (APK_URL) {
-  apk.href = APK_URL;
+  document.querySelectorAll('[data-apk]').forEach((a) => {
+    a.href = APK_URL;
+    a.addEventListener('click', () => {
+      const hint = document.getElementById('dl-hint');
+      hint.hidden = false;
+      if (a !== apk) hint.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
+    });
+  });
   document.getElementById('apk-label').textContent = 'Baixar o app';
   document.getElementById('apk-small').textContent = 'Grátis · Android';
 } else {
-  apk.removeAttribute('target');
   apk.setAttribute('aria-disabled', 'true');
   apk.addEventListener('click', (e) => e.preventDefault());
   document.getElementById('apk-small').textContent = 'Em breve';
