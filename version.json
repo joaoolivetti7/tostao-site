@@ -1,5 +1,5 @@
 {
-  "version": "1.4.0",
+  "version": "1.7.0",
   "url": "https://raw.githubusercontent.com/joaoolivetti7/tostao-site/main/tostao.apk",
-  "notes": "Importar dados de outro app, filtros no extrato e comparação com o mês anterior."
+  "notes": "Lembretes de vencimento, metas, digital ao abrir e importar extrato do banco."
 }
