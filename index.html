@@ -325,6 +325,9 @@ p { text-wrap: pretty; }
 .btn[aria-disabled="true"] { cursor: default; opacity: .7; }
 .cta .dl-hint { margin: 0; display: flex; gap: 8px; align-items: flex-start; max-width: 380px; padding: 10px 12px; border-radius: 12px; background: var(--bg); color: var(--fg); font-size: 13.5px; line-height: 1.45; }
 .cta .dl-hint .ic { color: var(--gold); margin-top: 2px; }
+.cta-ios { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--bg); text-decoration: underline; text-underline-offset: 3px; }
+.cta-ios:hover { color: var(--bg); }
+.note a { color: var(--gold-ink); font-weight: 700; }
 .cta-meta { font-size: 13px; color: #534114; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 
 /* Rodapé */
@@ -472,6 +475,10 @@ p { text-wrap: pretty; }
           <p>Toque em <strong>Instalar</strong> e depois em <strong>Abrir</strong>. Cadastre sua primeira conta e pronto, sem criar login.</p>
         </article>
       </div>
+      <div class="note note--ios" data-reveal>
+        <i data-lucide="apple" class="ic ic-20"></i>
+        <span><b>Tem iPhone?</b> Abra <a href="/app/">o tostão no Safari</a>, toque em <b>Compartilhar</b> → <b>Adicionar à Tela de Início</b>. Ele vira um ícone e abre em tela cheia. Os dados ficam no iPhone: faça backup toda semana em Mais → Backup. iOS 16.4 ou mais recente.</span>
+      </div>
       <div class="note" data-reveal>
         <i data-lucide="refresh-cw" class="ic ic-20"></i>
         <span>Para atualizar, instale a versão nova por cima da antiga. Seus dados continuam. Não desinstale antes: desinstalar apaga os dados do celular, a menos que você tenha um backup.</span>
@@ -492,6 +499,7 @@ p { text-wrap: pretty; }
             <span class="btn-stack"><small id="apk-small">Baixar grátis para</small><strong id="apk-label">Android</strong></span>
           </a>
           <span class="cta-meta"><i data-lucide="smartphone" class="ic ic-15"></i>Android 7 ou mais recente · arquivo .apk</span>
+          <a href="/app/" class="cta-ios"><i data-lucide="apple" class="ic ic-15"></i>Tem iPhone? Use pelo Safari</a>
           <p class="dl-hint" id="dl-hint" role="status" hidden><i data-lucide="bell" class="ic ic-15"></i><span>O download começou. Quando terminar, abra <b>tostao.apk</b> pela notificação ou em <b>Arquivos → Downloads</b>. Se a tela travar em "Fazendo o download", você está no navegador do WhatsApp ou Instagram: toque em ⋮ → <b>Abrir no Chrome</b>.</span></p>
         </div>
       </div>

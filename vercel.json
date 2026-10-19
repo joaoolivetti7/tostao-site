@@ -7,6 +7,18 @@
         { "key": "Content-Disposition", "value": "attachment; filename=\"tostao.apk\"" },
         { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
       ]
+    },
+    {
+      "source": "/app(.*)",
+      "headers": [
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
+        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" }
+      ]
+    },
+    {
+      "source": "/app/((?!_expo|assets).*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
     }
-  ]
+  ],
+  "rewrites": [{ "source": "/app/:path*", "destination": "/app/index.html" }]
 }

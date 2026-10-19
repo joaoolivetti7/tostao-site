@@ -13,3 +13,9 @@ Publicação: Vercel, importando este repositório (framework "Other", sem coman
 
 1. Troque o `tostao.apk` pelo build novo.
 2. Atualize o `version.json` (`version` igual ao `expo.version` do app, `notes` com um resumo curto). Os apps instalados leem esse arquivo e avisam que há versão nova.
+
+## Versão para iPhone (/app)
+
+A pasta `app/` é a versão web do tostão, gerada no repositório do app com `node scripts/build-web.mjs`
+(que copia para cá). O `vercel.json` dá os cabeçalhos de isolamento que o banco da web precisa
+(COEP `require-corp`, aceito pelo Safari) e manda as rotas internas para `app/index.html`.
