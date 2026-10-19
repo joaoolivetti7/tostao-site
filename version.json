@@ -1,5 +1,5 @@
 {
-  "version": "1.3.0",
+  "version": "1.4.0",
   "url": "https://raw.githubusercontent.com/joaoolivetti7/tostao-site/main/tostao.apk",
-  "notes": "Previsões do mês por categoria e saldo previsto até o fim do mês."
+  "notes": "Importar dados de outro app, filtros no extrato e comparação com o mês anterior."
 }
