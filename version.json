@@ -1,5 +1,5 @@
 {
-  "version": "1.8.0",
+  "version": "1.9.0",
   "url": "https://raw.githubusercontent.com/joaoolivetti7/tostao-site/main/tostao.apk",
-  "notes": "Parcelas na fatura importada, previsto de meses futuros e aviso de erros."
+  "notes": "Contas fixas previstas nos meses futuros e repetir por X vezes."
 }
